@@ -1,0 +1,55 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# The workflow only needs to read the source code. Deployment is performed
+# through Render's secret deploy hook, so no cloud credential is stored here.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      AGENT_API_KEY: ci-test-key
+      REDIS_URL: fake://
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run unit and integration tests
+        run: pytest tests/ -v -m "not docker" --ignore=tests/test_cp5.py
+
+  build:
+    name: Build Docker image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Build image
+        run: docker build --tag day12-agent:${{ github.sha }} .
+
+  deploy:
+    name: Deploy to Render
+    needs: [test, build]
+    # Pull requests validate the code but can never deploy it.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl --fail --show-error --silent --request POST "$RENDER_DEPLOY_HOOK"
