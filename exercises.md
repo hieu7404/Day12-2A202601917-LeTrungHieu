@@ -6,7 +6,7 @@
 > Cách trả lời: thay dòng `> *Câu trả lời của bạn*` bằng câu trả lời.
 > `grade.py` đếm số câu đã trả lời (15 điểm cho 10 câu).
 >
-> Họ và tên: ..........................  Mã học viên: ..........................
+> Họ và tên: Lê Trung Hiếu.  Mã học viên: 2A202601917.
 
 ---
 
@@ -16,7 +16,7 @@ Trong `Settings`, `agent_api_key` không có giá trị mặc định nên app c
 khi khởi động nếu thiếu biến môi trường. Hãy mô tả một tình huống cụ thể mà
 việc "chết sớm" này cứu bạn, so với việc để mặc định `"changeme"`.
 
-> *Câu trả lời của bạn*
+> Nếu để mặc định là "changeme", khi đưa ứng dụng lên môi trường thực tế mà quên cấu hình key thật, ứng dụng vẫn sẽ hoạt động bình thường. Lỗ hổng là kẻ xấu có thể dùng key mặc định này để gọi API miễn phí và gây thiệt hại lớn về tài chính. Việc ứng dụng báo lỗi và dừng ngay lập tức (fail-fast) bắt buộc lập trình viên phải thiết lập key hợp lệ trước khi chạy, giúp ngăn chặn rủi ro này từ đầu.
 
 ---
 
@@ -26,7 +26,10 @@ Chạy service và gọi `/ask` vài lần. Dán một dòng log JSON bạn thu 
 nêu **hai** việc bạn làm được với dòng log đó mà `print("đã trả lời xong")`
 không làm được.
 
-> *Câu trả lời của bạn*
+> Dòng log JSON: {"event": "ask_completed", "user_id": "sv-123", "tokens_in": 150, "tokens_out": 200, "cost_usd": 0.005, "timestamp": "2026-08-10T10:15:00.123Z"}
+Nhờ log này mình làm được 2 việc:
+- Dùng các công cụ giám sát để tự động đếm và tính tổng chi phí (cost_usd) mà từng user đã sử dụng trong tháng.
+- Dễ dàng dùng câu lệnh truy vấn (query) để lọc ra các request có số lượng tokens_out > 1000 nhằm mục đích tối ưu hóa, điều mà hàm print() thông thường không làm được vì thiếu dữ liệu định lượng.
 
 ---
 
@@ -47,8 +50,12 @@ docker images | grep agent
 
 Giải thích: phần dung lượng chênh lệch đó là những gì?
 
-> *Câu trả lời của bạn*
+> | Bản | Dung lượng |
+|-----|-----------|
+| 1 stage (bản đầu) | ~1.73GB |
+| Multi-stage | ~270MB |
 
+Giải thích: Phần chênh lệch dung lượng hơn 1.4 GB đó là do các trình biên dịch hệ thống (như gcc) và mã nguồn C++ dư thừa sinh ra trong lúc tải thư viện. Ở bản Multi-stage, chúng ta chỉ sao chép các file thư viện đã được biên dịch hoàn chỉnh sang môi trường chạy thực tế (stage 2), bỏ lại những thứ không cần thiết.
 ---
 
 ### Câu 4 — Thứ tự lệnh trong Dockerfile (CP2)
@@ -57,7 +64,8 @@ Sửa một ký tự trong `app/main.py` rồi build lại. Với Dockerfile c�
 layer nào được dùng lại từ cache, layer nào phải chạy lại? Nếu bạn đặt
 `COPY . .` lên trước `RUN pip install` thì kết quả khác thế nào?
 
-> *Câu trả lời của bạn*
+> Khi sửa main.py: Các bước COPY requirements.txt và RUN pip install vẫn sử dụng lại bộ nhớ đệm (cache) cũ nên chạy rất nhanh. Chỉ từ lệnh COPY app trở đi mới phải thực thi lại.
+Nếu đặt COPY . . lên trên cùng: Mỗi khi sửa đổi bất kỳ nội dung nào trong code, Docker sẽ làm mất cache từ dòng lệnh đó. Dẫn đến việc lệnh pip install phía dưới cũng bị chạy lại toàn bộ, gây lãng phí nhiều phút đồng hồ để tải lại thư viện.
 
 ---
 
@@ -67,7 +75,7 @@ Container mặc định chạy bằng root. Mô tả chuỗi sự kiện dẫn t
 trong code Python của bạn" tới "kẻ tấn công có quyền cao trên máy host", và
 lệnh `USER` cắt đứt chuỗi đó ở chỗ nào.
 
-> *Câu trả lời của bạn*
+> Container mặc định chạy bằng quyền root. Nếu ứng dụng Python có lỗ hổng (ví dụ: cho phép thực thi mã lệnh từ xa), kẻ tấn công sẽ chiếm được quyền root bên trong container, từ đó có thể tìm cách thoát ra ngoài (container breakout) để phá hoại máy chủ thật. Lệnh USER appuser ép ứng dụng chạy dưới quyền người dùng thông thường, giới hạn hoàn toàn đặc quyền của kẻ tấn công ngay cả khi chúng xâm nhập được vào container.
 
 ---
 
@@ -78,7 +86,8 @@ phút đồng hồ (reset lúc giây 00), một người dùng có thể gửi t
 request trong 2 giây liên tiếp khi hạn mức là 10/phút? Giải thích cách đạt được
 con số đó.
 
-> *Câu trả lời của bạn*
+> Một người dùng có thể gửi tối đa 20 request trong 2 giây liên tiếp.
+Giải thích: Nếu đếm theo phút, người dùng gửi 10 request vào lúc 10:00:59 (thuộc phút cũ nên hợp lệ). Sau đó đúng 1 giây, họ gửi tiếp 10 request vào lúc 10:01:00 (đã sang phút mới, hệ thống reset bộ đếm về 0 nên tiếp tục hợp lệ). Do đó, máy chủ phải chịu 20 request chỉ trong vòng 2 giây, làm mất đi tác dụng giới hạn tải của Rate Limit.
 
 ---
 
@@ -87,7 +96,9 @@ con số đó.
 Hai cơ chế này khác nhau ở điểm nào? Cho một tình huống mà rate limit cho qua
 nhưng cost guard phải chặn, và một tình huống ngược lại.
 
-> *Câu trả lời của bạn*
+> Sự khác biệt: Rate limit giới hạn "số lượng/tần suất gọi", còn Cost guard giới hạn "tổng chi phí/ngân sách".
+- Rate limit cho qua, Cost guard chặn: User lần đầu gọi API trong tháng (thoát Rate limit) nhưng gửi một đoạn văn bản rất dài tiêu tốn 15$ (vượt ngân sách 10$) ➔ Bị Cost guard chặn.
+- Cost guard cho qua, Rate limit chặn: User mới tiêu hết 0.1$ (thoát Cost guard) nhưng cài bot gọi liên tục 15 câu chat siêu ngắn trong vòng 1 phút ➔ Rate limit sẽ chặn lại từ câu thứ 11.
 
 ---
 
