@@ -27,9 +27,9 @@ nêu **hai** việc bạn làm được với dòng log đó mà `print("đã tr
 không làm được.
 
 > Dòng log JSON: {"event": "ask_completed", "level": "info", "timestamp": "2026-08-10T05:47:42.174621+00:00", "user_id": "sv-123", "tokens_in": 3, "tokens_out": 41, "cost_usd": 2.505e-05}
-Nhờ log này mình làm được 2 việc:
-- Dùng các công cụ giám sát để tự động đếm và tính tổng chi phí (cost_usd) mà từng user đã sử dụng trong tháng.
-- Dễ dàng dùng câu lệnh truy vấn (query) để lọc ra các request có số lượng tokens_out > 1000 nhằm mục đích tối ưu hóa, điều mà hàm print() thông thường không làm được vì thiếu dữ liệu định lượng.
+> Nhờ log này mình làm được 2 việc:
+> - Dùng các công cụ giám sát để tự động đếm và tính tổng chi phí (cost_usd) mà từng user đã sử dụng trong tháng.
+> - Dễ dàng dùng câu lệnh truy vấn (query) để lọc ra các request có số lượng tokens_out > 1000 nhằm mục đích tối ưu hóa, điều mà hàm print() thông thường không làm được vì thiếu dữ liệu định lượng.
 
 ---
 
@@ -51,11 +51,11 @@ docker images | grep agent
 Giải thích: phần dung lượng chênh lệch đó là những gì?
 
 > | Bản | Dung lượng |
-|-----|-----------|
-| 1 stage (bản đầu) | ~1.73GB |
-| Multi-stage | ~270MB |
+> |-----|-----------|
+> | 1 stage (bản đầu) | ~1.73GB |
+> | Multi-stage | ~270MB |
 
-Giải thích: Phần chênh lệch dung lượng hơn 1.4 GB đó là do các trình biên dịch hệ thống (như gcc) và mã nguồn C++ dư thừa sinh ra trong lúc tải thư viện. Ở bản Multi-stage, chúng ta chỉ sao chép các file thư viện đã được biên dịch hoàn chỉnh sang môi trường chạy thực tế (stage 2), bỏ lại những thứ không cần thiết.
+> Giải thích: Phần chênh lệch dung lượng hơn 1.4 GB đó là do các trình biên dịch hệ thống (như gcc) và mã nguồn C++ dư thừa sinh ra trong lúc tải thư viện. Ở bản Multi-stage, chúng ta chỉ sao chép các file thư viện đã được biên dịch hoàn chỉnh sang môi trường chạy thực tế (stage 2), bỏ lại những thứ không cần thiết.
 ---
 
 ### Câu 4 — Thứ tự lệnh trong Dockerfile (CP2)
@@ -97,8 +97,8 @@ Hai cơ chế này khác nhau ở điểm nào? Cho một tình huống mà rate
 nhưng cost guard phải chặn, và một tình huống ngược lại.
 
 > Sự khác biệt: Rate limit giới hạn "số lượng/tần suất gọi", còn Cost guard giới hạn "tổng chi phí/ngân sách".
-- Rate limit cho qua, Cost guard chặn: User lần đầu gọi API trong tháng (thoát Rate limit) nhưng gửi một đoạn văn bản rất dài tiêu tốn 15$ (vượt ngân sách 10$) ➔ Bị Cost guard chặn.
-- Cost guard cho qua, Rate limit chặn: User mới tiêu hết 0.1$ (thoát Cost guard) nhưng cài bot gọi liên tục 15 câu chat siêu ngắn trong vòng 1 phút ➔ Rate limit sẽ chặn lại từ câu thứ 11.
+> - Rate limit cho qua, Cost guard chặn: User lần đầu gọi API trong tháng (thoát Rate limit) nhưng gửi một đoạn văn bản rất dài tiêu tốn 15$ (vượt ngân sách 10$) -> Bị Cost guard chặn.
+> - Cost guard cho qua, Rate limit chặn: User mới tiêu hết 0.1$ (thoát Cost guard) nhưng cài bot gọi liên tục 15 câu chat siêu ngắn trong vòng 1 phút -> Rate limit sẽ chặn lại từ câu thứ 11.
 
 ---
 
@@ -108,11 +108,11 @@ Nếu gộp hai endpoint làm một và cho nó kiểm tra Redis, chuyện gì x
 3 container khi Redis mất kết nối 30 giây? Trả lời theo đúng thứ tự sự kiện.
 
 > Trình tự sự kiện nếu gộp chung:
-- Redis mất kết nối mạng 30 giây.
-- Hàm /health (vì đã gộp chung lệnh kiểm tra Redis) lập tức báo lỗi 503.
-- Hệ thống quản trị (như Docker/Kubernetes) gọi vào /health thấy lỗi liền lầm tưởng cả 3 container ứng dụng Python đều đã bị treo/hỏng.
-- Hệ thống thẳng tay khởi động lại (restart) cả 3 container cùng một lúc, gây gián đoạn toàn bộ dịch vụ.
-(Nếu tách riêng: /ready báo 503 để ngừng nhận request mới chờ Redis hồi phục, nhưng /health vẫn báo 200 do Python vẫn chạy, hệ thống sẽ không bị restart oan uổng).
+> - Redis mất kết nối mạng 30 giây.
+> - Hàm /health (vì đã gộp chung lệnh kiểm tra Redis) lập tức báo lỗi 503.
+> - Hệ thống quản trị (như Docker/Kubernetes) gọi vào /health thấy lỗi liền lầm tưởng cả 3 container ứng dụng Python đều đã bị treo/hỏng.
+> - Hệ thống thẳng tay khởi động lại (restart) cả 3 container cùng một lúc, gây gián đoạn toàn bộ dịch vụ.
+> (Nếu tách riêng: /ready báo 503 để ngừng nhận request mới chờ Redis hồi phục, nhưng /health vẫn báo 200 do Python vẫn chạy, hệ thống sẽ không bị restart oan uổng).
 
 
 ---
@@ -124,8 +124,8 @@ Chạy `docker compose up --scale agent=3` rồi gọi `/ask` nhiều lần vớ
 trong một dict Python thay vì Redis, bạn sẽ thấy con số đó thay đổi thế nào?
 
 > Nếu lưu lịch sử bằng biến toàn cục (dict) trong RAM thay vì dùng chung Redis:
-Mỗi container có một vùng RAM hoàn toàn độc lập. Khi chạy 3 container, Load Balancer sẽ phân phối các request ngẫu nhiên (VD: Câu 1 vào máy A, câu 2 vào máy B).
-Kết quả: Sẽ thấy thông số history_length nhảy loạn xạ (lúc thì 1, lúc lại về 1, lúc thì 2) thay vì tăng dần đều. Nguyên nhân do mỗi máy chủ chỉ lưu được đúng phần hội thoại mà chính nó xử lý và hoàn toàn không biết gì về các đoạn chat đã gửi cho 2 máy còn lại.
+> Mỗi container có một vùng RAM hoàn toàn độc lập. Khi chạy 3 container, Load Balancer sẽ phân phối các request ngẫu nhiên (VD: Câu 1 vào máy A, câu 2 vào máy B).
+> Kết quả: Sẽ thấy thông số history_length nhảy loạn xạ (lúc thì 1, lúc lại về 1, lúc thì 2) thay vì tăng dần đều. Nguyên nhân do mỗi máy chủ chỉ lưu được đúng phần hội thoại mà chính nó xử lý và hoàn toàn không biết gì về các đoạn chat đã gửi cho 2 máy còn lại.
 
 ---
 
