@@ -26,7 +26,7 @@ Chạy service và gọi `/ask` vài lần. Dán một dòng log JSON bạn thu 
 nêu **hai** việc bạn làm được với dòng log đó mà `print("đã trả lời xong")`
 không làm được.
 
-> Dòng log JSON: {"event": "ask_completed", "user_id": "sv-123", "tokens_in": 150, "tokens_out": 200, "cost_usd": 0.005, "timestamp": "2026-08-10T10:15:00.123Z"}
+> Dòng log JSON: {"event": "ask_completed", "level": "info", "timestamp": "2026-08-10T05:47:42.174621+00:00", "user_id": "sv-123", "tokens_in": 3, "tokens_out": 41, "cost_usd": 2.505e-05}
 Nhờ log này mình làm được 2 việc:
 - Dùng các công cụ giám sát để tự động đếm và tính tổng chi phí (cost_usd) mà từng user đã sử dụng trong tháng.
 - Dễ dàng dùng câu lệnh truy vấn (query) để lọc ra các request có số lượng tokens_out > 1000 nhằm mục đích tối ưu hóa, điều mà hàm print() thông thường không làm được vì thiếu dữ liệu định lượng.
@@ -135,4 +135,4 @@ Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health 
 timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
 tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 
-> *Câu trả lời của bạn*
+> Lỗi gặp phải: Truy cập vào Public URL trên trình duyệt nhận được kết quả {"detail": "Not Found"}. Thông báo lỗi: Lỗi 404 Not Found. Nguyên nhân: Do theo thói quen click trực tiếp vào đường link URL gốc của ứng dụng (ví dụ: https://day12-agent-x71y.onrender.com/) trên dashboard. Tuy nhiên, ứng dụng FastAPI này không định nghĩa endpoint nào ở thư mục gốc /. Cách sửa: Gõ thêm đuôi /health vào thanh địa chỉ của trình duyệt (https://.../health) để truy cập đúng endpoint kiểm tra liveness, kết quả trả về {"status":"ok",...} thành công.
