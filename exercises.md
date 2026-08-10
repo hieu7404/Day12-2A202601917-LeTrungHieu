@@ -107,7 +107,13 @@ nhưng cost guard phải chặn, và một tình huống ngược lại.
 Nếu gộp hai endpoint làm một và cho nó kiểm tra Redis, chuyện gì xảy ra với cụm
 3 container khi Redis mất kết nối 30 giây? Trả lời theo đúng thứ tự sự kiện.
 
-> *Câu trả lời của bạn*
+> Trình tự sự kiện nếu gộp chung:
+- Redis mất kết nối mạng 30 giây.
+- Hàm /health (vì đã gộp chung lệnh kiểm tra Redis) lập tức báo lỗi 503.
+- Hệ thống quản trị (như Docker/Kubernetes) gọi vào /health thấy lỗi liền lầm tưởng cả 3 container ứng dụng Python đều đã bị treo/hỏng.
+- Hệ thống thẳng tay khởi động lại (restart) cả 3 container cùng một lúc, gây gián đoạn toàn bộ dịch vụ.
+(Nếu tách riêng: /ready báo 503 để ngừng nhận request mới chờ Redis hồi phục, nhưng /health vẫn báo 200 do Python vẫn chạy, hệ thống sẽ không bị restart oan uổng).
+
 
 ---
 
@@ -117,7 +123,9 @@ Chạy `docker compose up --scale agent=3` rồi gọi `/ask` nhiều lần vớ
 `X-User-Id`. Quan sát `history_length` trong response. Nếu lịch sử được lưu
 trong một dict Python thay vì Redis, bạn sẽ thấy con số đó thay đổi thế nào?
 
-> *Câu trả lời của bạn*
+> Nếu lưu lịch sử bằng biến toàn cục (dict) trong RAM thay vì dùng chung Redis:
+Mỗi container có một vùng RAM hoàn toàn độc lập. Khi chạy 3 container, Load Balancer sẽ phân phối các request ngẫu nhiên (VD: Câu 1 vào máy A, câu 2 vào máy B).
+Kết quả: Sẽ thấy thông số history_length nhảy loạn xạ (lúc thì 1, lúc lại về 1, lúc thì 2) thay vì tăng dần đều. Nguyên nhân do mỗi máy chủ chỉ lưu được đúng phần hội thoại mà chính nó xử lý và hoàn toàn không biết gì về các đoạn chat đã gửi cho 2 máy còn lại.
 
 ---
 
