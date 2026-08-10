@@ -21,14 +21,39 @@
 #            docker images day12-agent:prod     # xem dung lượng
 # ═══════════════════════════════════════════════════════════════════
 
-FROM python:3.11
+# ------------------------------------
+# 2.1 Stage 1: Builder (Cài thư viện)
+# ------------------------------------
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-COPY . .
+# 2.2: Copy requirement trước để tối ưu Cache
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-RUN pip install -r requirements.txt
+# ------------------------------------
+# 2.1 Stage 2: Runtime (Bản thật sự chạy)
+# ------------------------------------
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Copy thư viện đã build từ stage 1 sang
+COPY --from=builder /install /usr/local
+
+# Copy code của app (làm cuối cùng)
+COPY app ./app
+COPY utils ./utils
+
+# 2.3: Chạy bằng user thường (Không dùng root)
+RUN useradd --create-home --uid 10001 appuser
+USER appuser
+
+# 2.4: Khai báo Healthcheck và chạy bằng PORT động
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()" || exit 1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
