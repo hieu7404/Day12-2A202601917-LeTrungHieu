@@ -5,18 +5,6 @@ gọi được, có bảo mật, có giới hạn chi phí, và không sập khi
 
 [![CI/CD](https://github.com/hieu7404/K3-Day12-2A202601917-LeTrungHieu/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hieu7404/K3-Day12-2A202601917-LeTrungHieu/actions/workflows/ci.yml)
 
-## CI/CD (Bonus)
-
-Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every
-push and pull request to `main`. It runs the test suite (excluding the live
-cloud check `test_cp5.py`), builds the Docker image, and then deploys only a
-successful push to `main`.
-
-Before pushing the workflow, add the repository Actions secret
-`RENDER_DEPLOY_HOOK` in **Settings → Secrets and variables → Actions**. Its
-value is the Render deploy-hook URL. The URL is intentionally not stored in
-this repository.
-
 ---
 
 ## ⚠️ Bài Làm Cá Nhân

@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [main]
 
-# The workflow only needs to read the source code. Deployment is performed
-# through Render's secret deploy hook, so no cloud credential is stored here.
+# Workflow chỉ cần quyền đọc mã nguồn. Deploy dùng deploy hook của Render được
+# lưu trong GitHub Secret, vì vậy repository không chứa thông tin nhạy cảm.
 permissions:
   contents: read
 
@@ -29,9 +29,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run unit and integration tests
-        # The bonus test verifies the public workflow badge itself. Running it
-        # from this workflow would create a circular check while the badge is
-        # still being updated by GitHub Actions.
+        # Test bonus tự kiểm tra badge công khai của workflow. Không chạy nó
+        # trong CI để tránh vòng lặp khi GitHub đang cập nhật badge.
         run: pytest tests/ -v -m "not docker" --ignore=tests/test_cp5.py --ignore=tests/test_bonus_cicd.py
 
   build:
@@ -47,7 +46,7 @@ jobs:
   deploy:
     name: Deploy to Render
     needs: [test, build]
-    # Pull requests validate the code but can never deploy it.
+    # Pull request chỉ kiểm tra code, tuyệt đối không được deploy.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
